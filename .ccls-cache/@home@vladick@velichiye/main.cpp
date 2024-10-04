@@ -139,8 +139,7 @@ int main()
 
 	glDeleteVertexArrays(2, VAOs);
     glDeleteBuffers(2, VBOs);
-    glDeleteProgram(shaderProgram1);
-	glDeleteProgram(shaderProgram2);
+    glDeleteProgram(shaderProgram1, shaderProgram2);
 
 	glfwTerminate();
 	return 0;
