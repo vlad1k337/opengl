@@ -1,4 +1,9 @@
+*
 .*
-!.gitignore
 *.o
+!.gitignore
+!.cpp
+!.c
+!include/
+!Makefile
 
