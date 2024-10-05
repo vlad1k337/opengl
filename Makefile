@@ -1,7 +1,7 @@
 CFLAGS       = -Wall -Wextra
 INCLUDES     = -Iinclude/
 LIBS   	     = -lglfw -lGL  
-LOADER_FLAGS =-O3 -funroll-loops
+LOADER_FLAGS = -O3 -funroll-loops
 CC = g++
 
 all: main.o glad.o
