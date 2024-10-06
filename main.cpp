@@ -10,11 +10,18 @@
 
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);  
-void proccesInput(GLFWwindow* window);
+void proccesInput(GLFWwindow* window, Shader shader);
+
 float vertices[] = {
-    -0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   0.0f, 0.0f,   
-     0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   1.0f, 0.0f,   
-     0.0f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   0.5f, 1.0f,   
+     0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   
+     0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   
+    -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,  
+    -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f  
+};
+
+unsigned int indices[] = {
+	0, 1, 3,
+	1, 2, 3
 };
 
 int main()
@@ -41,18 +48,23 @@ int main()
 		return -1;
 	}    
 	
+	Shader ourShader("shaders/vertexShader.glsl", "shaders/fragmentShader.glsl");
 	// binding vertex attributes using Vertex Array Object
 	// in our case, the only attribute is vertex position
 	
 	// creating and binding VAO and VBO
-	unsigned int VAO, VBO;
+	unsigned int VAO, VBO, EBO;
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
-	
+	glGenBuffers(1, &EBO);
+
 	glBindVertexArray(VAO); 
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
 	// coordinates 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(0));
@@ -67,12 +79,12 @@ int main()
 	glEnableVertexAttribArray(2);
 
 
-	glBindVertexArray(0);
+	unsigned int ourTexture1, ourTexture2;
 
-	unsigned int texture;
-	glGenTextures(1, &texture);
-	glBindTexture(GL_TEXTURE_2D, texture);
-	
+	// texture1
+	glGenTextures(1, &ourTexture1);
+	glBindTexture(GL_TEXTURE_2D, ourTexture1);
+
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -80,7 +92,7 @@ int main()
 
 	int width, height, nrChannels;
 	stbi_set_flip_vertically_on_load(true);
-	unsigned char *data = stbi_load("assets/bogdan.jpg", &width, &height, &nrChannels, 0);
+	unsigned char *data = stbi_load("assets/vietnam.jpg", &width, &height, &nrChannels, 0);
 	if(data)
 	{
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
@@ -92,23 +104,53 @@ int main()
 	}
 	stbi_image_free(data);
 
-	Shader ourShader("shaders/vertexShader.glsl", "shaders/fragmentShader.glsl");
+	// texture2
+	glGenTextures(1, &ourTexture2);
+	glBindTexture(GL_TEXTURE_2D, ourTexture2);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	stbi_set_flip_vertically_on_load(true);
+	data = stbi_load("assets/bogdan.jpg", &width, &height, &nrChannels, 0);
+	if(data) 
+	{
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+			glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else 
+	{
+		std::cout << "Poshel nahui" << std::endl;
+	}
+	stbi_image_free(data);
+
+
+	ourShader.use();
+	
+	ourShader.setInt("ourTexture1", 0);
+	ourShader.setInt("ourTexture2", 1);
 
 	while(!glfwWindowShouldClose(window))
 	{
-		proccesInput(window);
-			
+		proccesInput(window, ourShader);
+		
 		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
-	
+
 		ourShader.use();
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, ourTexture1);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, ourTexture2);
+
 		glBindVertexArray(VAO);
-		glBindTexture(GL_TEXTURE_2D, texture);	
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();    
-	}
+	}	
 
 
 	glfwTerminate();
@@ -121,8 +163,35 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
-void proccesInput(GLFWwindow* window)
+void proccesInput(GLFWwindow* window, Shader shader)
 {
-	if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
+	if(glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+	{
+		GLint location = glGetUniformLocation(shader.ID, "interpol");
+		if(location != -1)
+		{
+			GLfloat value;
+			glGetUniformfv(shader.ID, location, &value);
+			GLfloat new_value = value + 0.1f;
+
+			glUniform1f(location, new_value);
+		}
+		else
+			std::cout << "no uniform, sosi yaiytsa";
+	}
+
+	if(glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+	{
+		GLint location = glGetUniformLocation(shader.ID, "interpol");
+		if(location != -1)
+		{
+			GLfloat value;
+			glGetUniformfv(shader.ID, location, &value);
+			GLfloat new_value = value - 0.1f;
+
+			glUniform1f(location, new_value);
+		}
+		else
+			std::cout << "no uniform, sosi yaiytsa";
+	}
 }

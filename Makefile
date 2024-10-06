@@ -13,8 +13,5 @@ main.o: main.cpp
 glad.o: glad.c
 	$(CC) $(CFLAGS) -o glad.o -c glad.c $(INCLUDES)
 
-#stb_image.o: stb_image.cpp
-#	$(CC) $(CFLAGS) -o stb_image.o -c stb_image.cpp $(INCLUDES)
-
 clean: 
 	rm -f glad.o main.o main 
